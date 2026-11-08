@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดอกไม้สำหรับเธอ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1d1530;--bg2:#2c1f4a;--ink:#fff4f8;--pink:#ff8fb1;--butter:#ffd86b;--lilac:#b9a6ff;--leaf:#5fd0a0}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% 0%,var(--bg2),var(--bg) 70%) fixed;color:var(--ink);font-family:"Mali","Noto Sans Thai",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px}
+h1{font-weight:600;font-size:clamp(1.5rem,5vw,2.3rem);margin:8px 0 6px;text-align:center}
+.sub{color:var(--butter);margin:0 0 4px;font-size:1.05rem;text-align:center}
+.hint{opacity:.75;margin:0 0 10px;text-align:center;min-height:1.5em}
+svg{width:100%;max-width:760px;height:auto;overflow:visible}
+.card{width:100%}
+.f{cursor:pointer;outline:none}
+.f:focus-visible .bud{stroke:var(--butter);stroke-width:4}
+.stem{fill:none;stroke:var(--leaf);stroke-width:5;stroke-linecap:round;stroke-dasharray:var(--len);stroke-dashoffset:var(--len);transition:stroke-dashoffset 1s ease}
+.leaf{fill:var(--leaf);opacity:0;transition:opacity .6s .6s}
+.head{transform:scale(0);transition:transform .9s cubic-bezier(.3,1.5,.5,1)}
+.bud{transition:opacity .3s}
+.pulse{animation:p 1.8s ease-in-out infinite}
+@keyframes p{50%{transform:scale(1.25)}}
+.f.on .stem{stroke-dashoffset:0}
+.f.on .leaf{opacity:1}
+.f.on .head{transform:scale(1)}
+.f.on .bud{opacity:0}
+.f.on .pulse{animation:none}
+.ground{stroke:var(--lilac);stroke-opacity:.35;stroke-width:3;stroke-linecap:round}
+.card{max-width:520px;margin-top:18px;padding:22px 26px;border-radius:22px;background:rgba(255,244,248,.08);border:1px solid rgba(255,143,177,.45);line-height:1.9;opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity 1s,transform 1s}
+.card.show{opacity:1;transform:none;pointer-events:auto}
+.card p{margin:0 0 .6em}
+.sign{text-align:right;color:var(--butter);margin:0}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01s!important;animation:none!important}}
+</style>
+</head>
+<body>
+<h1 id="title"></h1>
+<p class="sub" id="sub"></p>
+<p class="hint" id="hint">แตะตุ่มดอกไม้ให้บาน</p>
+<svg id="garden" viewBox="0 0 700 400" role="group" aria-label="สวนดอกไม้"></svg>
+<section class="card" id="card" aria-live="polite">
+  <p id="msg"></p>
+  <p class="sign" id="sign"></p>
+</section>
+
+<script>
+// ===== แก้ข้อความตรงนี้ได้เลย (หรือใช้ ?to=ชื่อเธอ&from=ชื่อเรา ต่อท้าย URL) =====
+const q = new URLSearchParams(location.search);
+const TO = q.get('to') || 'อีฟ';
+const FROM = q.get('from') || 'คนที่รักเธอ';
+const SUB = q.get('sub') || 'ครบรอบ 3 เดือนของเรา';
+const MESSAGE = q.get('msg') || 'ครบ 3 เดือนแล้วนะ ' + TO + '\nขอบคุณที่อยู่ข้างกัน ขอบคุณที่ใจดีและอดทนกับเรา\nขอบคุณทุกวันที่ทำให้เรายิ้มได้\nดอกไม้พวกนี้ไม่มีวันเหี่ยว เหมือนที่ใจเราไม่เคยเปลี่ยน\nขอให้เราอยู่ด้วยกันไปอีกนานๆ นะ';
+// ============================================================================
+
+document.getElementById('sub').textContent = SUB;
+document.getElementById('title').textContent = 'ดอกไม้สำหรับ' + TO;
+document.getElementById('msg').innerHTML = MESSAGE.split('\n').map(s => s.replace(/</g,'&lt;')).join('<br>');
+document.getElementById('sign').textContent = '— ' + FROM;
+
+const NS = 'http://www.w3.org/2000/svg';
+const el = (n, a = {}, p) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); p && p.appendChild(e); return e; };
+const svg = document.getElementById('garden');
+const hint = document.getElementById('hint'), card = document.getElementById('card');
+
+// สี, จำนวนกลีบ, ขนาด, ชนิด ('sun' = ทานตะวัน)
+const FLOWERS = [
+  ['#ff8fb1', 8, 0.9], ['', 0, 1.0, 'sun'], ['#b9a6ff', 6, 0.95],
+  ['#ffd86b', 12, 0.8], ['#ff8fb1', 10, 1.1], ['#ffd86b', 7, 0.9],
+  ['', 0, 1.1, 'sun'], ['#b9a6ff', 9, 0.85], ['#ff8fb1', 6, 0.95]
+];
+// ตำแหน่ง [x, พื้น(y), ความสูงก้าน] แยกตามขนาดจอ
+const WIDE = { vb: [700, 400], grounds: [380], pos: [
+  [55,380,180],[128,380,275],[200,380,165],[275,380,240],[350,380,300],[425,380,170],[500,380,280],[575,380,205],[645,380,165]] };
+const NARROW = { vb: [420, 700], grounds: [330, 660], pos: [
+  [50,330,150],[130,330,235],[210,330,165],[290,330,230],[370,330,170],
+  [75,660,170],[165,660,245],[255,660,165],[345,660,200]] };
+
+const bloomed = new Set();
+const mq = matchMedia('(max-width:560px)');
+
+function updateHint() {
+  hint.textContent = bloomed.size === 0 ? 'แตะตุ่มดอกไม้ให้บาน' : bloomed.size < FLOWERS.length ? 'เหลืออีก ' + (FLOWERS.length - bloomed.size) + ' ดอก' : '';
+}
+function bloom(g, i) {
+  if (bloomed.has(i)) return;
+  bloomed.add(i); g.classList.add('on'); updateHint();
+  if (bloomed.size === FLOWERS.length) setTimeout(() => card.classList.add('show'), 700);
+}
+
+function render() {
+  const L = mq.matches ? NARROW : WIDE;
+  svg.innerHTML = '';
+  svg.setAttribute('viewBox', '0 0 ' + L.vb[0] + ' ' + L.vb[1]);
+  svg.style.maxWidth = mq.matches ? '460px' : '760px';
+  L.grounds.forEach(gy => el('line', {x1: 20, y1: gy, x2: L.vb[0] - 20, y2: gy, class: 'ground'}, svg));
+
+  FLOWERS.forEach(([color, n, s, type], i) => {
+    const [x, gy, h] = L.pos[i], y = gy - h;
+    const g = el('g', {class: 'f', tabindex: 0, role: 'button', 'aria-label': 'ดอกไม้ดอกที่ ' + (i + 1)}, svg);
+    const bend = (i % 2 ? 22 : -22);
+    const d = `M${x} ${gy} C${x + bend} ${gy - h * .4} ${x - bend} ${gy - h * .75} ${x} ${y}`;
+    el('path', {d, class: 'stem'}, g).style.setProperty('--len', 600);
+    const ly = gy - h * .45;
+    el('ellipse', {cx: x + 22, cy: ly, rx: 22, ry: 9, class: 'leaf', transform: `rotate(-25 ${x + 22} ${ly})`}, g);
+    el('ellipse', {cx: x - 22, cy: ly + 26, rx: 22, ry: 9, class: 'leaf', transform: `rotate(25 ${x - 22} ${ly + 26})`}, g);
+    const bud = el('circle', {class: 'bud pulse', cx: x, cy: gy, r: 11, fill: type === 'sun' ? '#ffc82e' : color}, g);
+    bud.style.transformOrigin = x + 'px ' + gy + 'px';
+    const head = el('g', {class: 'head'}, el('g', {transform: `translate(${x} ${y}) scale(${s})`}, g));
+    if (type === 'sun') {
+      for (let k = 0; k < 20; k++) el('ellipse', {cx: 0, cy: -44, rx: 8, ry: 22, fill: '#e8a317', transform: `rotate(${k * 18 + 9})`}, head);
+      for (let k = 0; k < 20; k++) el('ellipse', {cx: 0, cy: -40, rx: 9, ry: 23, fill: '#ffc82e', transform: `rotate(${k * 18})`}, head);
+      el('circle', {r: 25, fill: '#5a3418'}, head);
+      el('circle', {r: 16, fill: '#3d2210'}, head);
+      for (let k = 0; k < 14; k++) { const a = k * 2.4, r = 3 + k * 1.4; el('circle', {cx: Math.cos(a) * r, cy: Math.sin(a) * r, r: 1.6, fill: '#b9803c'}, head); }
+    } else {
+      for (let k = 0; k < n; k++) el('ellipse', {cx: 0, cy: -30, rx: 13, ry: 26, fill: color, opacity: .92, transform: `rotate(${k * 360 / n})`}, head);
+      el('circle', {r: 13, fill: '#fff4f8'}, head);
+      el('circle', {r: 7, fill: '#d98a3d'}, head);
+    }
+    if (bloomed.has(i)) g.classList.add('on');
+    g.addEventListener('click', () => bloom(g, i));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); bloom(g, i); } });
+  });
+  updateHint();
+}
+
+mq.addEventListener('change', render); // สลับเลย์เอาต์เมื่อจอเปลี่ยนขนาด (เช่น หมุนจอ) โดยจำดอกที่บานแล้วไว้
+render();
+</script>
+</body>
+</html>
